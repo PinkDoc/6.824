@@ -3,7 +3,7 @@ package raft
 import "log"
 
 // Debugging
-const Debug = true
+const Debug = false
 
 func Min(a int, b int) int {
 	if a > b {

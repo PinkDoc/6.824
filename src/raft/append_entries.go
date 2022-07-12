@@ -41,8 +41,6 @@ func (rf *Raft) AppendEntries(args *AppendEntryArgs, reply *AppendEntryReply) {
 		rf.persist()
 	}
 
-	// Student guide
-	//If a follower does not have prevLogIndex in its log, it should return with conflictIndex = len(log) and conflictTerm = None.
 	if args.PrevLogIndex > rf.LastLogIndex() {
 		reply.ConflictIndex = len(rf.logs)
 		reply.ConflictTerm = Non
@@ -81,9 +79,6 @@ func (rf *Raft) AppendEntries(args *AppendEntryArgs, reply *AppendEntryReply) {
 
 	if args.LeaderCommit > rf.commitIndex {
 		rf.commitIndex = Min(args.LeaderCommit, len(rf.logs)-1)
-		go func() {
-			rf.doApply()
-		}()
 	}
 
 	reply.NextIndex = len(rf.logs)
@@ -176,11 +171,8 @@ func (rf *Raft) doHeartsBeat() {
 
 						N := copy[len(rf.matchIndex)/2]
 
-						if N > rf.commitIndex {
+						if N > rf.commitIndex && args.Entries[len(args.Entries)-1].Term == rf.currentTerm {
 							rf.commitIndex = N
-							go func() {
-								rf.doApply()
-							}()
 						}
 					}
 
@@ -194,17 +186,13 @@ func (rf *Raft) doHeartsBeat() {
 						rf.persist()
 					} else {
 
-						// RPC error
+						// RPC erro
 						if reply.ConflictIndex == -1 {
 							return
 						}
 
 						// Index
-						if reply.ConflictTerm == Non {
-							rf.nextIndex[index] = reply.ConflictIndex
-						} else {
-							rf.nextIndex[index] = reply.ConflictIndex
-						}
+						rf.nextIndex[index] = reply.ConflictIndex
 
 						if rf.nextIndex[index] == 0 {
 							// Zero is an empty
