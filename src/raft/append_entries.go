@@ -150,15 +150,12 @@ func (rf *Raft) doHeartsBeat() {
 
 				if reply.Success {
 
-					// Not the first log
 					if len(args.Entries) > 0 {
 						rf.nextIndex[index] = reply.NextIndex
 						rf.matchIndex[index] = rf.nextIndex[index] - 1
 
-						// Update Commit index
 						copy := make([]int, len(rf.matchIndex)-1)
 
-						// Copy matchIndex
 						p := 0
 						for i := 0; i < len(rf.matchIndex); i++ {
 							if i != rf.me {
