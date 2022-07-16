@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const Debug = true
+const Debug = false
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
 	if Debug {
@@ -226,7 +226,7 @@ func (kv *KVServer) applier() {
 
 			termOk := true
 
-			if existContext && (cmd.CommandTerm != c.O.Term) {
+			if existContext && (cmd.CommandTerm != c.O.Term || cmd.CommandIndex != c.O.Index) {
 				DPrintf("cmd.CommandIndex {%v} c.O.Index {%v} ", cmd.CommandIndex, c.O.Index)
 				termOk = false
 			}
