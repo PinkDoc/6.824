@@ -69,7 +69,6 @@ func (rf *Raft) doElection() {
 		if i != rf.me {
 			go func(index int) {
 				reply := new(RequestVoteReply)
-				//reply.Index = index
 				rf.mu.Lock()
 
 				if rf.currentTerm != term || rf.state != Candidate {

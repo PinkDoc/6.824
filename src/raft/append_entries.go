@@ -90,11 +90,11 @@ func (rf *Raft) sendAppendEntries(server int, args *AppendEntryArgs, reply *Appe
 	return ok
 }
 
-func (rf *Raft) doHeartsBeat() {
+func (rf *Raft) serverAppendEntries() {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	DPrintf("doHeartsBeat rf.me %d rf.term %d", rf.me, rf.currentTerm)
+	DPrintf("sendAppendEntries rf.me %d rf.term %d", rf.me, rf.currentTerm)
 
 	if rf.state != Leader {
 		return

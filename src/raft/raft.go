@@ -221,50 +221,13 @@ func (rf *Raft) ticker() {
 		case <-rf.electionTimer.C:
 			rf.doElection()
 		case <-rf.heartsbeatTimer.C:
-			rf.doHeartsBeat()
+			rf.serverAppendEntries()
 		case <-rf.killChannel:
 			rf.mu.Lock()
 			rf.dead = 1
 			rf.mu.Unlock()
 		}
 	}
-}
-
-func (rf *Raft) doApply() {
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
-
-	if rf.lastApplied < rf.commitIndex && rf.commitIndex > 0 {
-
-		// Figure 8
-		if rf.logs[rf.commitIndex].Term != rf.currentTerm {
-			return
-		}
-
-		msgs := make([]ApplyMsg, 0)
-		for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
-			msgs = append(msgs, ApplyMsg{
-				CommandValid:  true,
-				Command:       rf.logs[i].Command,
-				CommandIndex:  rf.logs[i].Index,
-				SnapshotValid: false,
-				Snapshot:      nil,
-				SnapshotTerm:  0,
-				SnapshotIndex: 0,
-			})
-		}
-
-		rf.mu.Unlock()
-
-		for _, msg := range msgs {
-			rf.applyChannel <- msg
-		}
-
-		rf.mu.Lock()
-		rf.lastApplied = rf.commitIndex
-
-	}
-
 }
 
 func (rf *Raft) applier() {
@@ -294,6 +257,7 @@ func (rf *Raft) applier() {
 					SnapshotTerm:  0,
 					SnapshotIndex: 0,
 				})
+
 			}
 
 			rf.mu.Unlock()
@@ -304,7 +268,8 @@ func (rf *Raft) applier() {
 
 			rf.mu.Lock()
 			isLocked = true
-			rf.lastApplied = rf.commitIndex
+			//
+			rf.lastApplied += len(msgs)
 
 		}
 
