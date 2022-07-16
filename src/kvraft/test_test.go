@@ -97,7 +97,7 @@ func Append(cfg *config, ck *Clerk, key string, value string, log *OpLog, cli in
 func check(cfg *config, t *testing.T, ck *Clerk, key string, value string) {
 	v := Get(cfg, ck, key, nil, -1)
 	if v != value {
-		t.Fatalf("Get(%v): expected:\n%v\nreceived:\n%v", key, value, v)
+		t.Fatalf("GetOp(%v): expected:\n%v\nreceived:\n%v", key, value, v)
 	}
 }
 
@@ -200,7 +200,7 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 	}
 }
 
-// Basic test is as follows: one or more clients submitting Append/Get
+// Basic test is as follows: one or more clients submitting Append/GetOp
 // operations to set of servers for some period of time.  After the period is
 // over, test checks that all appended values are present and in order for a
 // particular key.  If unreliable is set, RPCs may fail.  If crash is set, the
@@ -213,7 +213,7 @@ func GenericTest(t *testing.T, part string, nclients int, nservers int, unreliab
 
 	title := "Test: "
 	if unreliable {
-		// the network drops RPC requests and replies.
+		// the network drops RPC requestIds and replies.
 		title = title + "unreliable net, "
 	}
 	if crash {
@@ -282,7 +282,7 @@ func GenericTest(t *testing.T, part string, nclients int, nservers int, unreliab
 					j++
 				} else if randomkeys && (rand.Int()%1000) < 100 {
 					// we only do this when using random keys, because it would break the
-					// check done after Get() operations
+					// check done after GetOp() operations
 					Put(cfg, myck, key, nv, opLog, cli)
 					j++
 				} else {
@@ -351,7 +351,7 @@ func GenericTest(t *testing.T, part string, nclients int, nservers int, unreliab
 
 		if maxraftstate > 0 {
 			// Check maximum after the servers have processed all client
-			// requests and had time to checkpoint.
+			// requestIds and had time to checkpoint.
 			sz := cfg.LogSize()
 			if sz > 8*maxraftstate {
 				t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
@@ -399,7 +399,7 @@ func GenericTestSpeed(t *testing.T, part string, maxraftstate int) {
 	cfg.begin(fmt.Sprintf("Test: ops complete fast enough (%s)", part))
 
 	// wait until first op completes, so we know a leader is elected
-	// and KV servers are ready to process client requests
+	// and KV servers are ready to process client requestIds
 	ck.Get("x")
 
 	start := time.Now()
@@ -473,7 +473,7 @@ func TestUnreliableOneKey3A(t *testing.T) {
 	cfg.end()
 }
 
-// Submit a request in the minority partition and check that the requests
+// Submit a request in the minority partition and check that the requestIds
 // doesn't go through until the partition heals.  The leader in the original
 // network ends up in the minority partition.
 func TestOnePartition3A(t *testing.T) {
@@ -515,7 +515,7 @@ func TestOnePartition3A(t *testing.T) {
 	case <-done0:
 		t.Fatalf("Put in minority completed")
 	case <-done1:
-		t.Fatalf("Get in minority completed")
+		t.Fatalf("GetOp in minority completed")
 	case <-time.After(time.Second):
 	}
 
@@ -542,7 +542,7 @@ func TestOnePartition3A(t *testing.T) {
 	select {
 	case <-done1:
 	case <-time.After(30 * 100 * time.Millisecond):
-		t.Fatalf("Get did not complete")
+		t.Fatalf("GetOp did not complete")
 	default:
 	}
 
