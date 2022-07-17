@@ -44,6 +44,7 @@ type ApplyMsg struct {
 	CommandValid bool
 	Command      interface{}
 	CommandIndex int
+	CommandTerm  int
 
 	// For 2D:
 	SnapshotValid bool
@@ -252,6 +253,7 @@ func (rf *Raft) applier() {
 					CommandValid:  true,
 					Command:       rf.logs[i].Command,
 					CommandIndex:  rf.logs[i].Index,
+					CommandTerm:   rf.currentTerm,
 					SnapshotValid: false,
 					Snapshot:      nil,
 					SnapshotTerm:  0,
@@ -268,7 +270,7 @@ func (rf *Raft) applier() {
 
 			rf.mu.Lock()
 			isLocked = true
-			//
+			// don't use rf.lastApplied = rf.commitIndex
 			rf.lastApplied += len(msgs)
 
 		}
