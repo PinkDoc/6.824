@@ -33,6 +33,13 @@ func (rf *Raft) AppendEntries(args *AppendEntryArgs, reply *AppendEntryReply) {
 		return
 	}
 
+	if len(args.Entries) > 0 &&
+		len(rf.logs) > args.PrevLogIndex+len(args.Entries) && rf.logs[len(args.Entries)+args.PrevLogIndex].Term == args.PrevLogTerm {
+		reply.ConflictIndex = -1
+		reply.ConflictTerm = -1
+		return
+	}
+
 	rf.becomeFollower(args.Term, args.LeaderId)
 
 	if rf.currentTerm < args.Term {
